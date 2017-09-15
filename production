@@ -1,0 +1,5 @@
+1.2.3.4 mission=kepler campaign='QO,Q1,Q17'
+
+[all:vars]
+endpoint='https://kepler.pierrezemb.org'
+token='abc'

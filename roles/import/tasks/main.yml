@@ -1,0 +1,37 @@
+---
+# tasks file for common
+
+- name: apt install
+  become: yes
+  become_method: sudo
+  apt: name={{item}} state=present update_cache=yes
+  with_items:
+    - vim
+    - git
+    - python3-pip
+    - build-essential
+    - python3-tk
+    - manpages-dev
+    - gcc
+    - python3-dev
+
+- name: git clone
+  raw: git clone https://github.com/PierreZ/kepler-lens.git kepler
+
+- name: rm folder
+  raw: rm -rf /home/debian/.kepler
+
+# Example from Ansible Playbooks
+- name: copy uploader
+  become: yes
+  become_method: sudo
+  copy:
+    src: files/kepler2warp10
+    dest: /bin/kepler2warp10
+    owner: root
+    group: root
+    mode: 0777
+
+- name: starting import
+  raw: "nohup python3 kepler/main.py init '{{ mission }}' --limit '{{ campaign }}' --path '/home/debian/.kepler' --endpoint '{{ endpoint }}' --wtoken '{{ token }}' </dev/null >/dev/null 2>&1 & sleep 1"
+  with_items: groups['all']
