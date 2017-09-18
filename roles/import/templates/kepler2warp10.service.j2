@@ -1,0 +1,15 @@
+[Unit]
+Description=kepler2warp10
+ 
+[Service]
+Type=simple
+User=debian
+Group=debian
+LimitNOFILE=infinity
+LimitMEMLOCK=infinity
+Restart=always
+RestartSec=3
+ExecStart=/bin/kepler2warp10 --path={{ path }}/csv --endpoint={{endpoint}} --token={{token}}
+ 
+[Install]
+WantedBy=multi-user.target

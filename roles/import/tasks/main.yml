@@ -15,13 +15,60 @@
     - gcc
     - python3-dev
 
+- name: Set sysctl File Limits
+  become: yes
+  become_method: sudo
+  copy:
+    src: files/50-fs.conf
+    dest: /etc/sysctl.d
+
+- name: Set Shell File Limits
+  become: yes
+  become_method: sudo
+  copy:
+    src: 91-nofiles.conf
+    dest: /etc/security/limits.d
+
+
+- name: limits soft
+  become: yes
+  become_method: sudo
+  pam_limits:
+    domain: debian
+    limit_type: hard
+    limit_item: nofile
+    value: 64000
+
+- name: limits hard
+  become: yes
+  become_method: sudo
+  pam_limits:
+    domain: debian
+    limit_type: hard
+    limit_item: nofile
+    value: 64000
+
+
+- name: restart server
+  shell: sleep 2 && shutdown -r now
+  async: 1
+  poll: 0
+  become: yes
+  become_method: sudo
+  ignore_errors: true
+- name: waiting for server to come back after reboot
+  local_action: wait_for host={{ inventory_hostname }} state=started port=22 delay=5 timeout=60 connect_timeout=15
+
+
 - name: git clone
   raw: git clone https://github.com/PierreZ/kepler-lens.git kepler
 
-- name: rm folder
-  raw: rm -rf /home/debian/.kepler
+# - name: git pull
+#   raw: cd kepler && git pull
 
-# Example from Ansible Playbooks
+- name: pip install
+  raw: cd kepler && pip3 install -r requirements.txt
+
 - name: copy uploader
   become: yes
   become_method: sudo
@@ -32,6 +79,43 @@
     group: root
     mode: 0777
 
-- name: starting import
-  raw: "nohup python3 kepler/main.py init '{{ mission }}' --limit '{{ campaign }}' --path '/home/debian/.kepler' --endpoint '{{ endpoint }}' --wtoken '{{ token }}' </dev/null >/dev/null 2>&1 & sleep 1"
-  with_items: groups['all']
+- name: kepler-lens unit file
+  become: yes
+  become_method: sudo
+  template:
+    src: templates/kepler-lens.service.j2
+    dest: /etc/systemd/system/kepler-lens.service
+
+- name: kepler2warp10 unit file
+  become: yes
+  become_method: sudo
+  template:
+    src: templates/kepler2warp10.service.j2
+    dest: /etc/systemd/system/kepler2warp10.service
+
+- name: create LOCK file
+  copy:
+    content: ""
+    dest: '{{ lock }}'
+    force: no
+    group: debian
+    owner: debian
+    mode: 0555
+
+- name: restart kepler2warp10.service
+  become: yes
+  become_method: sudo
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    enabled: True
+    name: kepler2warp10.service
+
+- name: restart kepler-lens.service
+  become: yes
+  become_method: sudo
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    enabled: True
+    name: kepler-lens.service

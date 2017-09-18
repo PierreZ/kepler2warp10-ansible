@@ -1,5 +1,7 @@
-1.2.3.4 mission=kepler campaign='QO,Q1,Q17'
+149.202.167.85 mission=kepler campaign='Q0'
 
 [all:vars]
 endpoint='https://kepler.pierrezemb.org'
-token='abc'
+token=''
+path='/home/debian/.kepler'
+lock='/home/debian/LOCK'

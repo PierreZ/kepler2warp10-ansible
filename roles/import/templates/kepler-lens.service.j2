@@ -1,0 +1,15 @@
+[Unit]
+Description=kepler-lens
+ConditionPathExists={{ lock }}
+
+[Service]
+Type=simple
+User=debian
+Group=debian
+LimitNOFILE=infinity
+LimitMEMLOCK=infinity
+Restart=always
+RestartSec=3
+ExecStart=/usr/bin/python3 /home/debian/kepler/main.py init '{{ mission }}' --limit '{{ campaign }}' --path '{{ path }}' --lock '{{ lock }}'
+[Install]
+WantedBy=multi-user.target
